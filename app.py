@@ -4,6 +4,8 @@ import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
 
+from db_utils import connect_to_db, get_table
+
 app = dash.Dash()
 server = app.server
 
@@ -51,6 +53,40 @@ def base_graph(i):
     )
 
 
+def postgres_graph(table_name):
+
+    conn = connect_to_db()
+    df = get_table(conn, table_name)
+
+    return dcc.Graph(
+        id= table_name,
+        figure={
+            'data': [
+                go.Scatter(
+                    x=df[df['resort'] == i]['time'],
+                    y=df[df['resort'] == i]['measurement'],
+                    text=df[df['resort'] == i]['measurement'],
+                    mode='line',
+                    opacity=0.7,
+                    marker={
+                        'size': 15,
+                        'line': {'width': 0.5, 'color': 'white'}
+                    },
+                    name=i
+                ) for i in df['resort'].unique()
+            ],
+            'layout': go.Layout(
+                xaxis={'title': 'Date'},
+                yaxis={'title': 'Temperature'},
+                margin={'l': 100, 'b': 100, 't': 100, 'r': 100},
+                legend={'x': 0, 'y': 1},
+                hovermode='closest',
+                title='Temperature graph'
+            )
+        }
+    )
+
+
 header_div = html.H1(
         children='Welcome to Ski Monitor',
         style={
@@ -59,7 +95,8 @@ header_div = html.H1(
         }
     )
 
-graph_divs = html.Div([base_graph(1), base_graph(2), base_graph(3), base_graph(4)], style={'columnCount': 2})
+#graph_divs = html.Div([base_graph(1), base_graph(2), base_graph(3), base_graph(4)], style={'columnCount': 2})
+graph_divs = html.Div([postgres_graph('temperatures')])
 
 app.layout = html.Div([header_div, graph_divs])
 
