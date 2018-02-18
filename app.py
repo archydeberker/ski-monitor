@@ -5,6 +5,7 @@ import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
 from db_utils import connect_to_db, get_table
+import darksky
 
 app = dash.Dash()
 server = app.server
@@ -32,6 +33,7 @@ app.layout = html.Div([
     'margin-left': 'auto',
     'margin-right': 'auto'
 })
+
 
 def base_graph(i):
 
@@ -69,16 +71,14 @@ class PostgresGrapher():
     def __init__(self):
         self.conn = connect_to_db()
 
-    def plot_lines(self, table_name, column, title):
-
-        df = get_table(self.conn, table_name).sort_values(by='timestamp')
+    def plot_lines(self, df, column, title):
 
         return dcc.Graph(
-            id= '-'.join((table_name, column)),
+            id= column,
             figure={
                 'data': [
                     go.Scatter(
-                        x=df[df['location'] == i]['timestamp'],
+                        x=df[df['location'] == i]['time'],
                         y=df[df['location'] == i][column],
                         text=df[df['location'] == i][column],
                         mode='line',
@@ -101,16 +101,14 @@ class PostgresGrapher():
             }
         )
 
-    def plot_area(self, table_name, column, title):
-
-        df = get_table(self.conn, table_name).sort_values(by='timestamp')
+    def plot_area(self, df, column, title):
 
         return dcc.Graph(
-            id= '-'.join((table_name, column)),
+            id= column,
             figure={
                 'data': [
                     go.Scatter(
-                        x=df[df['location'] == i]['timestamp'],
+                        x=df[df['location'] == i]['time'],
                         y=df[df['location'] == i][column],
                         text=df[df['location'] == i][column],
                         mode='none',
@@ -140,7 +138,7 @@ class PostgresGrapher():
             figure={
                 'data': [
                     go.Scatter(
-                        x=df[df['location'] == i]['timestamp'],
+                        x=df[df['location'] == i]['time'],
                         y=df[df['location'] == i][column1],
                         text=df[df['location'] == i][column1],
                         mode='none',
@@ -149,7 +147,7 @@ class PostgresGrapher():
                         name=i
                     ) for i in df['location'].unique()] +
                     [go.Scatter(
-                        x=df[df['location'] == i]['timestamp'],
+                        x=df[df['location'] == i]['time'],
                         y=-df[df['location'] == i][column2],
                         text=df[df['location'] == i][column2],
                         mode='none',
@@ -181,24 +179,30 @@ explainer_div = html.P(children='Snowfall plotted as positive values, rainfall a
                            'textAlign': 'center',
                        })
 
+#columns=['location', 'time', 'summary', 'icon', 'precipIntensity', 'precipProbability', 'precipType', 'temperature', 'apparentTemperature', 'dewPoint', 'humidity', 'pressure', 'windSpeed', 'windGust', 'windBearing', 'cloudCover', 'uvIndex', 'visibility', 'ozone'])
 
+
+df_historic = darksky.get_past_week_darksky(darksky.loc_dict)
+df_forecast = darksky.get_nextweek_darksky(darksky.loc_dict)
 
 pg = PostgresGrapher()
 #graph_divs = html.Div([base_graph(1), base_graph(2), base_graph(3), base_graph(4)], style={'columnCount': 2})
 @app.callback(Output('tab-output', 'children'), [Input('tabs', 'value')])
 def display_content(value):
-    if value==0:
-        graph_divs = html.Div([pg.plot_lines('current', 'temp_c_max', 'Max Temperature (C)'),
-                           pg.plot_lines('current', 'windspeed_mph', 'Windspeed (Mph)')],
+    if value == 0:
+
+        graph_divs = html.Div([pg.plot_lines(df_historic, 'temperature', 'Temperature (C)'),
+                           pg.plot_lines(df_historic, 'windSpeed', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_opposed('current', 'snow_mm', 'rain_mm', 'Snowfall plotted as positive values, rainfall as negative.'))])
+        return html.Div([graph_divs, html.Div(pg.plot_area(df_historic, 'precipIntensity', 'Snowfall plotted as positive values, rainfall as negative.'))])
     else:
-        graph_divs = html.Div([pg.plot_lines('forecasts', 'temp_c_max', 'Max Temperature (C)'),
-                           pg.plot_lines('forecasts', 'windspeed_mph', 'Windspeed (Mph)')],
+
+        graph_divs = html.Div([pg.plot_lines(df_forecast, 'temperature', 'Temperature (C)'),
+                           pg.plot_lines(df_forecast, 'windSpeed', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_opposed('forecasts', 'snow_mm', 'rain_mm', '+ Snow (mm), - Rain(mm)'))])
+        return html.Div([graph_divs, html.Div(pg.plot_area(df_historic, 'precipIntensity' '+ Snow (mm), - Rain(mm)'))])
 
 
 if __name__ == '__main__':
