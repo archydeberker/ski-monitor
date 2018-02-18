@@ -2,7 +2,6 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
-import pandas as pd
 from dash.dependencies import Input, Output
 
 from db_utils import connect_to_db, get_table
@@ -177,6 +176,12 @@ header_div = html.H1(
         }
     )
 
+explainer_div = html.P(children='Snowfall plotted as positive values, rainfall as negative.',
+                       style={
+                           'textAlign': 'center',
+                       })
+
+
 
 pg = PostgresGrapher()
 #graph_divs = html.Div([base_graph(1), base_graph(2), base_graph(3), base_graph(4)], style={'columnCount': 2})
@@ -187,7 +192,7 @@ def display_content(value):
                            pg.plot_lines('current', 'windspeed_mph', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_opposed('current', 'snow_mm', 'rain_mm', '+ Snow (mm), - Rain(mm)'))])
+        return html.Div([graph_divs, html.Div(pg.plot_opposed('current', 'snow_mm', 'rain_mm', 'Snowfall plotted as positive values, rainfall as negative.'))])
     else:
         graph_divs = html.Div([pg.plot_lines('forecasts', 'temp_c_max', 'Max Temperature (C)'),
                            pg.plot_lines('forecasts', 'windspeed_mph', 'Windspeed (Mph)')],
