@@ -8,7 +8,7 @@ import requests
 import datetime
 
 from psycopg2.extensions import AsIs
-
+import darksky
 
 def connect_to_db():
 
@@ -76,7 +76,7 @@ def get_forecast_weather(loc_dict):
 
     return data_dict
 
-def add_row(data, table_name):
+def add_row(conn, data, table_name):
 
     columns = data.keys()
     values = [data[column] for column in columns]
@@ -113,6 +113,52 @@ def add_current(current_dict):
         add_row(data, 'current')
 
 
+def add_darksky(conn, df, table_name):
+    """ Take a darksky dataframe and add it to the specified table."""
+
+    data = df.to_dict(orient='records')
+
+    for item in data:
+        add_row(conn, item, table_name)
+
+def drop_table(conn, table_name):
+    """Use me with caution!"""
+    cursor=conn.cursor()
+    cursor.execute("DROP TABLE %s"%table_name)
+    conn.commit()
+
+def create_darksky_table(conn, table_name):
+    """ All darksky tables have the same format.
+
+    Note that location and precipSigned are added by us, not the API."""
+
+    cursor=conn.cursor()
+    cursor.execute("CREATE TABLE %s( \
+                location TEXT, \
+                time TIMESTAMP, \
+                apparentTemperature REAL, \
+                cloudCover TEXT, \
+                dewPoint REAL, \
+                humidity REAL, \
+                icon TEXT, \
+                ozone REAL, \
+                precipAccumulation REAL, \
+                precipIntensity REAL, \
+                precipProbability REAL, \
+                precipType TEXT, \
+                pressure REAL, \
+                summary TEXT, \
+                temperature REAL, \
+                uvIndex REAL, \
+                visibility REAL, \
+                windBearing REAL, \
+                windGust REAL, \
+                windSpeed REAL, \
+                precipSigned REAL, \
+                PRIMARY KEY(Location, time));"%table_name)
+
+    conn.commit()
+
 if __name__ == '__main__':
 
     loc_dict = {'Jay Peak':(44.9649,-72.4602),
@@ -124,8 +170,8 @@ if __name__ == '__main__':
 
     conn = connect_to_db()
 
-    forecast_dict = get_forecast_weather(loc_dict)
-    add_forecasts(forecast_dict)
+    forecast_df = darksky.get_nextweek_darksky(loc_dict)
+    add_darksky(conn, forecast_df, 'ds_forecasts')
 
-    current_dict = get_current_weather(loc_dict)
-    add_current(current_dict)
+    current_df = darksky.get_past_week_darksky(loc_dict)
+    add_darksky(conn, current_df, 'ds_current')

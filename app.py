@@ -2,10 +2,15 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
+import pandas as pd
+import datetime
+
 from dash.dependencies import Input, Output
 
 from db_utils import connect_to_db, get_table
 import darksky
+import plotting
+
 
 app = dash.Dash()
 server = app.server
@@ -35,136 +40,6 @@ app.layout = html.Div([
 })
 
 
-def base_graph(i):
-
-    return dcc.Graph(
-        id='life-exp-vs-gdp-%d'%i,
-        figure={
-            'data': [
-                go.Scatter(
-                    x=df[df['continent'] == i]['gdp per capita'],
-                    y=df[df['continent'] == i]['life expectancy'],
-                    text=df[df['continent'] == i]['country'],
-                    mode='line',
-                    opacity=0.7,
-                    marker={
-                        'size': 15,
-                        'line': {'width': 0.5, 'color': 'white'}
-                    },
-                    name=i
-                ) for i in ['Asia', 'Europe']
-            ],
-            'layout': go.Layout(
-                xaxis={'type': 'log', 'title': 'GDP Per Capita'},
-                yaxis={'title': 'Life Expectancy'},
-                margin={'l':100, 'b': 100, 't': 100, 'r': 100},
-                legend={'x': 0, 'y': 1},
-                hovermode='closest',
-                title='Blablabla'
-            )
-        }
-    )
-
-
-class PostgresGrapher():
-
-    def __init__(self):
-        self.conn = connect_to_db()
-
-    def plot_lines(self, df, column, title):
-        df.sort_values(by='time', inplace=True)
-        return dcc.Graph(
-            id= column,
-            figure={
-                'data': [
-                    go.Scatter(
-                        x=df[df['location'] == i]['time'],
-                        y=df[df['location'] == i][column],
-                        text=df[df['location'] == i][column],
-                        mode='line',
-                        opacity=0.7,
-                        marker={
-                            'size': 15,
-                            'line': {'width': 0.5, 'color': 'white'}
-                        },
-                        name=i
-                    ) for i in df['location'].unique()
-                ],
-                'layout': go.Layout(
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': title},
-                    margin={'l': 100, 'b': 100, 't': 100, 'r': 100},
-                    legend={'x': 1, 'y': 1},
-                    hovermode='closest',
-                    title=title
-                )
-            }
-        )
-
-    def plot_area(self, df, column, title):
-
-
-        return dcc.Graph(
-            id= column,
-            figure={
-                'data': [
-                    go.Scatter(
-                        x=df[df['location'] == i]['time'],
-                        y=df[df['location'] == i][column],
-                        text=df[df['location'] == i][column],
-                        mode='none',
-                        opacity=0.1,
-                        fill='tozeroy',
-                        name=i
-                    ) for i in df['location'].unique()
-                ],
-                'layout': go.Layout(
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': title},
-                    margin={'l': 100, 'b': 100, 't': 100, 'r': 100},
-                    legend={'x': 1, 'y': 1},
-                    hovermode='closest',
-                    title=title
-                )
-            }
-        )
-
-    def plot_opposed(self, table_name, column1, column2, title):
-        ' Column1 will be plotted in positive, Column 2 in negative'
-
-
-        return dcc.Graph(
-            id= '-'.join((table_name, column1, column2)),
-            figure={
-                'data': [
-                    go.Scatter(
-                        x=df[df['location'] == i]['time'],
-                        y=df[df['location'] == i][column1],
-                        text=df[df['location'] == i][column1],
-                        mode='none',
-                        opacity=0.1,
-                        fill='tozeroy',
-                        name=i
-                    ) for i in df['location'].unique()] +
-                    [go.Scatter(
-                        x=df[df['location'] == i]['time'],
-                        y=-df[df['location'] == i][column2],
-                        text=df[df['location'] == i][column2],
-                        mode='none',
-                        opacity=0.1,
-                        fill='tonexty',
-                        name=i
-                    ) for i in df['location'].unique()],
-                'layout': go.Layout(
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': title},
-                    margin={'l': 100, 'b': 100, 't': 100, 'r': 100},
-                    legend={'x': 1, 'y': 1},
-                    hovermode='closest',
-                    title=title
-                )
-            }
-        )
 
 header_div = html.H1(
         children='Welcome to Ski Monitor',
@@ -174,35 +49,42 @@ header_div = html.H1(
         }
     )
 
-explainer_div = html.P(children='Snowfall plotted as positive values, rainfall as negative.',
-                       style={
-                           'textAlign': 'center',
-                       })
+darksky_div = html.Div(dcc.Markdown('[Powered by Dark Sky.](https://darksky.net/poweredby/)'),
+                        style={'textAlign':'center'})
 
 #columns=['location', 'time', 'summary', 'icon', 'precipIntensity', 'precipProbability', 'precipType', 'temperature', 'apparentTemperature', 'dewPoint', 'humidity', 'pressure', 'windSpeed', 'windGust', 'windBearing', 'cloudCover', 'uvIndex', 'visibility', 'ozone'])
 
+conn = connect_to_db()
 
-df_historic = darksky.get_past_week_darksky(darksky.loc_dict)
-df_forecast = darksky.get_nextweek_darksky(darksky.loc_dict)
+today = datetime.datetime.now().strftime('%Y-%m-%d')
+earliest = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
 
-pg = PostgresGrapher()
+df_historic = pd.read_sql("SELECT * from ds_current WHERE time > '%s'"%earliest, conn)
+#darksky.get_past_week_darksky(darksky.loc_dict)
+df_forecast = pd.read_sql("SELECT * from ds_forecasts WHERE time >= '%s'"%today, conn)
+#darksky.get_nextweek_darksky(darksky.loc_dict)
+
+pg = plotting.PostgresGrapher()
 #graph_divs = html.Div([base_graph(1), base_graph(2), base_graph(3), base_graph(4)], style={'columnCount': 2})
 @app.callback(Output('tab-output', 'children'), [Input('tabs', 'value')])
 def display_content(value):
     if value == 0:
 
         graph_divs = html.Div([pg.plot_lines(df_historic, 'temperature', 'Temperature (C)'),
-                           pg.plot_lines(df_historic, 'windSpeed', 'Windspeed (Mph)')],
+                           pg.plot_lines(df_historic, 'windspeed', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_area(df_historic, 'precipSigned', 'Snowfall plotted as positive values, rainfall as negative.'))])
+        return html.Div([graph_divs, html.Div(pg.plot_area(df_historic, 'precipsigned', 'Snowfall plotted as positive values, rainfall as negative.',
+                                                                                        'Precipitation (mm/hr)')),
+                        darksky_div])
     else:
 
         graph_divs = html.Div([pg.plot_lines(df_forecast, 'temperature', 'Temperature (C)'),
-                           pg.plot_lines(df_forecast, 'windSpeed', 'Windspeed (Mph)')],
+                           pg.plot_lines(df_forecast, 'windspeed', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_area(df_forecast, 'precipSigned' , 'Snowfall plotted as positive values, rainfall as negative.'))])
+        return html.Div([graph_divs, html.Div(pg.plot_area(df_forecast, 'precipsigned' , 'Snowfall plotted as positive values, rainfall as negative.', 'Precipitation (mm/hr)')),
+                        darksky_div])
 
 
 if __name__ == '__main__':

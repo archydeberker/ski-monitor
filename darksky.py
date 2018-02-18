@@ -13,12 +13,14 @@ loc_dict = {'Jay Peak':(44.9649,-72.4602),
 
 KEY = os.environ['DARKSKY_KEY']
 
+columns = ['location', 'time', 'summary', 'icon', 'precipIntensity', 'precipProbability', 'precipType',
+         'temperature', 'apparentTemperature', 'dewPoint', 'humidity', 'pressure', 'windSpeed', 'windGust',
+         'windBearing', 'cloudCover', 'uvIndex', 'visibility', 'ozone']
+
 def df_template():
 
     return pd.DataFrame(
-        columns=['location', 'time', 'summary', 'icon', 'precipIntensity', 'precipProbability', 'precipType',
-                 'temperature', 'apparentTemperature', 'dewPoint', 'humidity', 'pressure', 'windSpeed', 'windGust',
-                 'windBearing', 'cloudCover', 'uvIndex', 'visibility', 'ozone'])
+        columns=columns)
 
 def post_process(df):
 
@@ -27,6 +29,8 @@ def post_process(df):
     df.sort_values(by='time', inplace=True)
 
     p_type = np.array([int(i) for i in (df['precipType']=='rain').tolist()])
+
+    df = df[columns]
 
     df['precipSigned'] = df['precipIntensity'] * (1- 2*p_type)
     return df
@@ -59,7 +63,7 @@ def get_past_week_darksky(loc_dict):
     return post_process(df)
 
 
-def get_nextweek_darksky(loc_dict):
+def get_nextweek_darksky(loc_dict, daily=False):
     """ From the DarkSky docs:
     A Forecast Request returns the current weather conditions,
     a minute-by-minute forecast for the next hour (where available),
@@ -87,9 +91,10 @@ def get_nextweek_darksky(loc_dict):
             h['location'] = loc
             df = df.append(h, ignore_index=True)
 
-        for d in r.json()['daily']['data']:
-            h['location'] = loc
-            df = df.append(h, ignore_index=True)
+        if daily:
+            for d in r.json()['daily']['data']:
+                d['location'] = loc
+                df = df.append(d, ignore_index=True)
 
 
     return post_process(df)
