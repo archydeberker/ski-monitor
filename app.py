@@ -33,7 +33,7 @@ app.layout = html.Div([
     ),
     html.Div(id='tab-output')
 ], style={
-    'width': '80%',
+    'width': '95%',
     'fontFamily': 'Sans-Serif',
     'margin-left': 'auto',
     'margin-right': 'auto'
