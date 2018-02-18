@@ -24,7 +24,7 @@ def base_graph(i):
             'layout': go.Layout(
                 xaxis={'type': 'log', 'title': 'GDP Per Capita'},
                 yaxis={'title': 'Life Expectancy'},
-                margin={'l':60, 'b': 60, 't': 60, 'r': 60},
+                margin={'l':90, 'b': 90, 't': 90, 'r': 90},
                 legend={'x': 0, 'y': 1},
                 hovermode='closest',
                 title='Blablabla'
@@ -60,7 +60,7 @@ class PostgresGrapher():
                 'layout': go.Layout(
                     xaxis={'title': 'Date'},
                     yaxis={'title': title},
-                    margin={'l': 60, 'b': 60, 't': 60, 'r': 60},
+                    margin={'l': 90, 'b': 90, 't': 90, 'r': 90},
                     legend={'x': 1, 'y': 1},
                     hovermode='closest',
                     title=title
@@ -88,7 +88,7 @@ class PostgresGrapher():
                 'layout': go.Layout(
                     xaxis={'title': 'Date'},
                     yaxis={'title': ytitle if ytitle else title},
-                    margin={'l': 60, 'b': 60, 't': 60, 'r': 60},
+                    margin={'l': 90, 'b': 90, 't': 90, 'r': 90},
                     legend={'x': 1, 'y': 1},
                     hovermode='closest',
                     title=title
