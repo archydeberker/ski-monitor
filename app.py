@@ -72,7 +72,7 @@ class PostgresGrapher():
         self.conn = connect_to_db()
 
     def plot_lines(self, df, column, title):
-
+        df.sort_values(by='time', inplace=True)
         return dcc.Graph(
             id= column,
             figure={
@@ -103,6 +103,7 @@ class PostgresGrapher():
 
     def plot_area(self, df, column, title):
 
+
         return dcc.Graph(
             id= column,
             figure={
@@ -131,7 +132,6 @@ class PostgresGrapher():
     def plot_opposed(self, table_name, column1, column2, title):
         ' Column1 will be plotted in positive, Column 2 in negative'
 
-        df = get_table(self.conn, table_name)
 
         return dcc.Graph(
             id= '-'.join((table_name, column1, column2)),
@@ -195,14 +195,14 @@ def display_content(value):
                            pg.plot_lines(df_historic, 'windSpeed', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_area(df_historic, 'precipIntensity', 'Snowfall plotted as positive values, rainfall as negative.'))])
+        return html.Div([graph_divs, html.Div(pg.plot_area(df_historic, 'precipSigned', 'Snowfall plotted as positive values, rainfall as negative.'))])
     else:
 
         graph_divs = html.Div([pg.plot_lines(df_forecast, 'temperature', 'Temperature (C)'),
                            pg.plot_lines(df_forecast, 'windSpeed', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_area(df_historic, 'precipIntensity' '+ Snow (mm), - Rain(mm)'))])
+        return html.Div([graph_divs, html.Div(pg.plot_area(df_forecast, 'precipSigned' , 'Snowfall plotted as positive values, rainfall as negative.'))])
 
 
 if __name__ == '__main__':
