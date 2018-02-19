@@ -38,7 +38,7 @@ class PostgresGrapher():
     def __init__(self):
         pass
 
-    def plot_lines(self, df, column, title):
+    def plot_lines(self, df, column, title, ytitle=None):
         df.sort_values(by='time', inplace=True)
         return dcc.Graph(
             id= column,
@@ -59,7 +59,7 @@ class PostgresGrapher():
                 ],
                 'layout': go.Layout(
                     xaxis={'title': 'Date'},
-                    yaxis={'title': title},
+                    yaxis={'title': ytitle if ytitle else title},
                     margin={'l': 90, 'b': 90, 't': 90, 'r': 90},
                     legend={'x': 1, 'y': 1},
                     hovermode='closest',
@@ -88,15 +88,15 @@ class PostgresGrapher():
                 'layout': go.Layout(
                     xaxis={'title': 'Date'},
                     yaxis={'title': ytitle if ytitle else title},
-                    margin={'l': 90, 'b': 90, 't': 90, 'r': 90},
-                    legend={'x': 1, 'y': 1},
+                    margin={'l': 90, 'b': 90, 't': 90, 'r': 50},
+                    showlegend=False,
                     hovermode='closest',
                     title=title
                 )
-            }
+            },
         )
 
-    def plot_opposed(self, table_name, column1, column2, title):
+    def plot_opposed(self, df, column1, column2, title):
         ' Column1 will be plotted in positive, Column 2 in negative'
 
 
@@ -132,3 +132,25 @@ class PostgresGrapher():
                 )
             }
         )
+
+def plot_bar(df, column_list, title, ytitle=None):
+    return dcc.Graph(
+            figure={'data': [
+                go.Bar(
+                    x=column_list,
+                    y=df[df['location'] == i][column_list].as_matrix()[0],
+                    text=df[df['location'] == i][column_list].as_matrix()[0],
+                    opacity=0.5,
+                    name=i
+                ) for i in df['location'].unique()],
+                'layout': go.Layout(
+                    xaxis={'title': 'Region'},
+                    yaxis={'title': ytitle if ytitle else title},
+                    margin={'l': 90, 'b': 90, 't': 90, 'r': 90},
+                    legend={'x': 1, 'y': 1},
+                    hovermode='closest',
+                    title=title,
+            )
+        },
+        id='my-graph',
+    )

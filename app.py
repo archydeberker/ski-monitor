@@ -10,12 +10,14 @@ from dash.dependencies import Input, Output
 from db_utils import connect_to_db, get_table
 import darksky
 import plotting
-
+import scraping
 
 app = dash.Dash()
 server = app.server
 
 app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
+app.css.append_css({'external_url': 'https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css'})  # noqa: E501
+
 
 colors = {
     'background': '#111111',
@@ -49,7 +51,7 @@ header_div = html.H1(
         }
     )
 
-darksky_div = html.Div(dcc.Markdown('[Powered by Dark Sky.](https://darksky.net/poweredby/)'),
+darksky_div = html.Div(dcc.Markdown('[Powered by Dark Sky.](https://darksky.net/poweredby/) with help from [OnTheSnow](http://onthesnow.ca)'),
                         style={'textAlign':'center'})
 
 #columns=['location', 'time', 'summary', 'icon', 'precipIntensity', 'precipProbability', 'precipType', 'temperature', 'apparentTemperature', 'dewPoint', 'humidity', 'pressure', 'windSpeed', 'windGust', 'windBearing', 'cloudCover', 'uvIndex', 'visibility', 'ozone'])
@@ -64,23 +66,30 @@ df_historic = pd.read_sql("SELECT * from ds_current WHERE time > '%s'"%earliest,
 df_forecast = pd.read_sql("SELECT * from ds_forecasts WHERE time >= '%s'"%today, conn)
 #darksky.get_nextweek_darksky(darksky.loc_dict)
 
+snowdepth_df = scraping.get_snow_depths(scraping.loc_dict)
+
 pg = plotting.PostgresGrapher()
 #graph_divs = html.Div([base_graph(1), base_graph(2), base_graph(3), base_graph(4)], style={'columnCount': 2})
 @app.callback(Output('tab-output', 'children'), [Input('tabs', 'value')])
 def display_content(value):
     if value == 0:
 
-        graph_divs = html.Div([pg.plot_lines(df_historic, 'temperature', 'Temperature (C)'),
-                           pg.plot_lines(df_historic, 'windspeed', 'Windspeed (Mph)')],
+        upper_divs = html.Div([pg.plot_lines(df_historic, 'temperature', 'Temperature','Temperature (C)'),
+                           pg.plot_lines(df_historic, 'windspeed', 'Windspeed', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_area(df_historic, 'precipsigned', 'Snowfall plotted as positive values, rainfall as negative.',
-                                                                                        'Precipitation (mm/hr)')),
-                        darksky_div])
+        lower_divs =  html.Div([html.Div(pg.plot_area(df_historic, 'precipsigned', 'Snowfall plotted as positive values, rainfall as negative',
+                                            'Precipitation (mm/hr)'), className='eight columns'),
+
+                                html.Div(plotting.plot_bar(snowdepth_df, ['lower', 'middle', 'upper'], 'Current Snow Depth','Snow Depth (cm)'), className='four columns')],
+                                className='row')
+
+
+        return html.Div([upper_divs, lower_divs, darksky_div])
     else:
 
-        graph_divs = html.Div([pg.plot_lines(df_forecast, 'temperature', 'Temperature (C)'),
-                           pg.plot_lines(df_forecast, 'windspeed', 'Windspeed (Mph)')],
+        graph_divs = html.Div([pg.plot_lines(df_forecast, 'temperature', 'Temperature', 'Temperature (C)'),
+                           pg.plot_lines(df_forecast, 'windspeed', 'Windspeed', 'Windspeed (Mph)')],
                            style={'columnCount': 2})
 
         return html.Div([graph_divs, html.Div(pg.plot_area(df_forecast, 'precipsigned' , 'Snowfall plotted as positive values, rainfall as negative.', 'Precipitation (mm/hr)')),
