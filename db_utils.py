@@ -170,8 +170,12 @@ if __name__ == '__main__':
 
     conn = connect_to_db()
 
-    forecast_df = darksky.get_nextweek_darksky(loc_dict)
-    add_darksky(conn, forecast_df, 'ds_forecasts')
-
     current_df = darksky.get_past_week_darksky(loc_dict)
     add_darksky(conn, current_df, 'ds_current')
+
+    forecast_df = darksky.get_nextweek_darksky(loc_dict)
+
+    # We have to drop existing forecasts before adding new ones
+    drop_table(conn, 'ds_forecasts')
+    create_darksky_table(conn, 'ds_forecasts')
+    add_darksky(conn, forecast_df, 'ds_forecasts')
