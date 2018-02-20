@@ -45,3 +45,4 @@ urllib3==1.22
 wcwidth==0.1.7
 Werkzeug==0.14.1
 beautifulsoup4==4.6.0
+pytest==3.4.0

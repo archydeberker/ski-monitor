@@ -1,39 +1,8 @@
 import dash_core_components as dcc
-import dash_html_components as html
 import plotly.graph_objs as go
 
-def base_graph(i):
 
-    return dcc.Graph(
-        id='life-exp-vs-gdp-%d'%i,
-        figure={
-            'data': [
-                go.Scatter(
-                    x=df[df['continent'] == i]['gdp per capita'],
-                    y=df[df['continent'] == i]['life expectancy'],
-                    text=df[df['continent'] == i]['country'],
-                    mode='line',
-                    opacity=0.7,
-                    marker={
-                        'size': 15,
-                        'line': {'width': 0.5, 'color': 'white'}
-                    },
-                    name=i
-                ) for i in ['Asia', 'Europe']
-            ],
-            'layout': go.Layout(
-                xaxis={'type': 'log', 'title': 'GDP Per Capita'},
-                yaxis={'title': 'Life Expectancy'},
-                margin={'l':90, 'b': 90, 't': 90, 'r': 90},
-                legend={'x': 0, 'y': 1},
-                hovermode='closest',
-                title='Blablabla'
-            )
-        }
-    )
-
-
-class PostgresGrapher():
+class PostgresGrapher:
 
     def __init__(self):
         pass
@@ -70,7 +39,6 @@ class PostgresGrapher():
 
     def plot_area(self, df, column, title, ytitle=None):
 
-
         return dcc.Graph(
             id= column,
             figure={
@@ -97,8 +65,7 @@ class PostgresGrapher():
         )
 
     def plot_opposed(self, df, column1, column2, title):
-        ' Column1 will be plotted in positive, Column 2 in negative'
-
+        """ Column1 will be plotted in positive, Column 2 in negative"""
 
         return dcc.Graph(
             id= '-'.join((table_name, column1, column2)),
@@ -133,7 +100,11 @@ class PostgresGrapher():
             }
         )
 
+
 def plot_bar(df, column_list, title, ytitle=None):
+    """Plots bar chart, somewhat specificially for the current snow depths.
+     Assumes that each column in `column_list` contains a single """
+
     return dcc.Graph(
             figure={'data': [
                 go.Bar(
