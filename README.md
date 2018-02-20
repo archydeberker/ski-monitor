@@ -5,10 +5,13 @@ This repo provides tools for interactive plotting of historic and forecast:
  - precipitation [rain or snow]
  - current snow depth
  
- For a range of ski resorts (the default ones being the ones near me).
+For a range of ski resorts (the default ones being the ones near me).
+
+For a demo, see [this webapp](http://ski-monotor.herokuapp.com), which is deployed (for free) via [Heroku](http://heroku.com) (it's awesome).
  
+If you'd liek to set up something similar for yourself, see the [deployment section below](#deployment-to-heroku).
  ## Tech
-This repo uses:
+This app uses:
  
  - the Dash package from Plotly for plotting + serving the webapp
  - the DarkSky API for current and forecast weather
@@ -22,11 +25,57 @@ This repo uses:
 
 ### Requirements
 
-```buildoutcfg
+Create a virtual environment with whatever framework takes your fancy (e.g. Conda or Virtualenv).
+
+Now install the requirements:
+```bash
 pip install -r requirements.txt
+
+```
+You'll also need to visit [DarkSky](https://darksky.net/dev) and get your API key. Once you've done that, run
+
+```bash
+export DARKSKY_KEY=<your DarkSky API key>
 ```
 
-## Files
+To check everything is tickety-boo, run the tests:
+
+```bash
+pytest tests.py
+```
+### To run the web-app locally
+
+To use the app, you'll need to create a  Postgres database somewhere. I'd strongly recommend [Heroku](https://www.heroku.com/postgres).
+
+Once you've got a Postgres database setup, you'll need to export the `DATABASE_URL` for your database.
+
+This is automaticaly set in Heroku and you can find it in the settings for your app.
+```bash
+export DATABASE_URL=<your database URL>
+```
+
+Now you're ready to run your app:
+```bash
+python app.py
+
+```
+
+This should return a URL which you can refer to for lovely JS graphs.
+
+## Deployment to Heroku 
+
+If you've never used Heroku before, check out their [Getting Started](https://devcenter.heroku.com/start) guide.
+
+However, this repo is provisioned to work out-of-the-box, so you only really need to:
+
+- Create a new project in Heroku
+- Use the Postgres DB add-on to create a new database
+- Use the Heroku Scheduler add-on to schedule the database updates every hour, with:
+
+    ```python db_utils.py```
+    
+- Deploy the contents of this Git Repo to Heroku, by selecting the 'Deploy with Git' option under your project's deployment settings
+## Contents
 
 [app.py](/app.py): the web app itself, defining which graphs are plotted
 
