@@ -7,7 +7,7 @@ This repo provides tools for interactive plotting of historic and forecast:
  
 For a range of ski resorts (the default ones being the ones near me).
 
-For a demo, see [this webapp](http://ski-monotor.herokuapp.com), which is deployed (for free) via [Heroku](http://heroku.com) (it's awesome).
+For a demo, see [this webapp](http://ski-monitor.herokuapp.com), which is deployed (for free) via [Heroku](http://heroku.com) (it's awesome).
  
 If you'd liek to set up something similar for yourself, see the [deployment section below](#deployment-to-heroku).
  ## Tech
