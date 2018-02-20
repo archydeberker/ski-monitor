@@ -9,16 +9,17 @@ For a range of ski resorts (the default ones being the ones near me).
 
 For a demo, see [this webapp](http://ski-monitor.herokuapp.com), which is deployed (for free) via [Heroku](http://heroku.com) (it's awesome).
  
-If you'd liek to set up something similar for yourself, see the [deployment section below](#deployment-to-heroku).
+If you'd like to set up something similar for yourself, see the [deployment section below](#deployment-to-heroku).
+ 
  ## Tech
 This app uses:
  
- - the Dash package from Plotly for plotting + serving the webapp
- - the DarkSky API for current and forecast weather
- - onthesnow.com + BeautifulSoup for scraping current snow conditions
- - Heroku for deployment, which also gives us:
-    - a postgres database to store data
-    - a scheduler to update our database + scraped data once an hour
+ - the [Dash](https://plot.ly/dash/getting-started) package from Plotly for plotting + serving the webapp
+ - the [DarkSky API](https://darksky.net/dev) for current and forecast weather
+ - [OnTheSnow](https://www.onthesnow.com) + [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) for scraping current snow conditions
+ - [Heroku](http://heroku.com) for deployment, which also gives us:
+    - a [Postgres database](https://devcenter.heroku.com/articles/heroku-postgresql) to store data
+    - a [Scheduler](https://devcenter.heroku.com/articles/scheduler) to update our database + scraped data once an hour
     - gunicorn for more robust serving than Flask provides
     
 ## Setup
@@ -83,7 +84,7 @@ However, this repo is provisioned to work out-of-the-box, so you only really nee
 
 [darksky.py](/darksky.py): tools for calling the darksky API and returning pandas dataframe
 
-[db_utils.py](/db_utils.py): tools for interacting with the Postgres database
+[db_utils.py](/db_utils.py): tools for interacting with the Postgres database. When called from the command line (i.e. `python db_utils.py`), this updates the database with calls to the Darksky API.
 
 [plotting.py](/plotting.py): tools for plotting wih Dash/Plotly
 
