@@ -2,22 +2,21 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-loc_dict = {'Jay Peak':'https://www.onthesnow.com/vermont/jay-peak/skireport.html',
-            'Mt Sutton':'https://www.onthesnow.ca/quebec/mont-sutton/skireport.html',
-            'Mt Tremblant': 'https://www.onthesnow.ca/quebec/tremblant/skireport.html',
-            'St Anne': 'https://www.onthesnow.ca/quebec/mont-sainte-anne/skireport.html',
-            'Le Massif': 'https://www.onthesnow.ca/quebec/le-massif/skireport.html',
-           }
 
-def get_snow_depths(loc_dict):
-    """ Returns a df with snowd depth in cm"""
+def get_snow_depths(url_dict):
+
+    """ Returns a df with snow depth in cm.
+
+    Relies upon data from onthesnow.com/ca.
+
+    """
 
     snow_depth = {}
-    for location in loc_dict:
+    for location in url_dict:
 
         snow_depth[location] = {}
 
-        r = requests.get(loc_dict[location])
+        r = requests.get(url_dict[location])
         soup = BeautifulSoup(r.text, 'html.parser')
 
         for slope in ['upper', 'middle', 'lower']:

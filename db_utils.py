@@ -3,179 +3,139 @@ from urllib import parse
 import pandas as pd
 import psycopg2
 import os
-import json
-import requests
-import datetime
 
 from psycopg2.extensions import AsIs
+
 import darksky
-
-def connect_to_db():
-
-    parse.uses_netloc.append("postgres")
-    url = parse.urlparse(os.environ.get("DATABASE_URL"))
-
-    conn = psycopg2.connect(
-        database=url.path[1:],
-        user=url.username,
-        password=url.password,
-        host=url.hostname,
-        port=url.port)
-
-    return conn
+from constants import loc_dict
 
 
-def get_table(conn, table_name):
+class DatabaseConnection:
 
-    df = pd.read_sql('SELECT * from %s;' % table_name, conn)
+    def __init__(self):
+        self.conn = self.connect_to_db()
 
-    return df
+    def connect_to_db(self):
 
-def get_current_weather(loc_dict):
+        """
+        You need to have the variable DATABASE_URL in your environment.
+        This is automatically set in your Heroku app.
 
-    data_dict = {}
-    for location in loc_dict.keys():
+        """
 
-        r = requests.get('http://api.weatherunlocked.com/api/forecast/%1.2f,%1.2f?app_id=6765a93c&app_key=51b7b6cb5cf11b77b78d84d8f5c44845'%(loc_dict[location]))
+        parse.uses_netloc.append("postgres")
+        url = parse.urlparse(os.environ.get("DATABASE_URL"))
 
-        result = json.loads(r.text)
+        return psycopg2.connect(
+            database=url.path[1:],
+            user=url.username,
+            password=url.password,
+            host=url.hostname,
+            port=url.port)
 
-        data_dict[location] = {'Windspeed_Mph':result['Days'][0]['windspd_max_mph'],
-                               'Rain_mm': result['Days'][0]['rain_total_mm'],
-                               'Snow_mm': result['Days'][0]['snow_total_mm'],
-                               'Temp_C_Max': result['Days'][0]['temp_max_c'],
-                               'Temp_C_Min': result['Days'][0]['temp_min_c'],
-                               'Timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M'),
-                              }
+    def get_table(self, table_name):
 
-    return data_dict
+        """ Returns all the entries in the specified table.
 
-def get_forecast_weather(loc_dict):
+        """
 
-    data_dict = {}
+        df = pd.read_sql('SELECT * from %s;' % table_name, self.conn)
 
-    for location in loc_dict.keys():
+        return df
 
-        r = requests.get('http://api.weatherunlocked.com/api/forecast/%1.2f,%1.2f?app_id=6765a93c&app_key=51b7b6cb5cf11b77b78d84d8f5c44845'%(loc_dict[location]))
+    def add_row(self, data, table_name):
 
-        result = json.loads(r.text)
-        tomorrow = result['Days'][1]['Timeframes']
+        """Add a row to table_name.
 
-        data_dict[location] ={}
-        for i in range(8):
-            timestamp = (datetime.datetime.strptime(result['Days'][1]['date'],'%d/%m/%Y')
-                         +datetime.timedelta(hours=int(tomorrow[i]['time'])/100)).strftime('%Y-%m-%d %H:%M')
-            data_dict[location][timestamp]= {'Windspeed_Mph':tomorrow[i]['windspd_mph'],
-                                                       'Rain_mm': tomorrow[i]['rain_mm'],
-                                                       'Snow_mm': tomorrow[i]['snow_mm'],
-                                                       'Temp_C_Max': tomorrow[i]['temp_c'],
-                                                       'Temp_C_Min': tomorrow[i]['temp_c'],
+        `Data` must be a dictionary, where the keys match the columns in
+        `table_name`.
 
-                              }
+        """
 
+        columns = data.keys()
+        values = [data[column] for column in columns]
 
-    return data_dict
+        insert_statement = 'INSERT into ' + table_name + ' (%s) values %s'
 
-def add_row(conn, data, table_name):
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute(insert_statement, (AsIs(','.join(columns)), tuple(values)))
+            self.conn.commit()
+        except psycopg2.IntegrityError:
+            print('Skipping value already in table')
+            self.conn.rollback()
 
-    columns = data.keys()
-    values = [data[column] for column in columns]
+    def add_forecasts(self, forecast_dict):
 
-    insert_statement = 'INSERT into ' + table_name + ' (%s) values %s'
+        for location in forecast_dict.keys():
 
-    cursor=conn.cursor()
-    try:
-        cursor.execute(insert_statement, (AsIs(','.join(columns)), tuple(values)))
-        conn.commit()
-    except psycopg2.IntegrityError:
-        print('Skipping value already in table')
-        conn.rollback()
+            for timestamp in forecast_dict[location]:
+                data = forecast_dict[location][timestamp]
+                data['Timestamp'] = timestamp
+                data['Location'] = location
 
+                self.add_row(data, 'forecasts')
 
-def add_forecasts(forecast_dict):
+    def add_darksky(self, df, table_name):
+        """ Take a darksky dataframe and add it to the specified table."""
 
-    for location in forecast_dict.keys():
+        data = df.to_dict(orient='records')
 
-        for timestamp in forecast_dict[location]:
-            data = forecast_dict[location][timestamp]
-            data['Timestamp'] = timestamp
-            data['Location'] = location
+        for item in data:
+            self.add_row(item, table_name)
 
-            add_row(data, 'forecasts')
+    def drop_table(self, table_name):
+        """Use me with caution!"""
 
-def add_current(current_dict):
-
-    for location in forecast_dict.keys():
-
-        data = current_dict[location]
-        data['Location'] = location
-
-        add_row(data, 'current')
+        cursor = self.conn.cursor()
+        cursor.execute("DROP TABLE %s" % table_name)
+        self.conn.commit()
 
 
-def add_darksky(conn, df, table_name):
-    """ Take a darksky dataframe and add it to the specified table."""
+    def create_darksky_table(self, table_name):
+        """ All darksky tables have the same format.
 
-    data = df.to_dict(orient='records')
+        Note that location and precipSigned are added by us, not the API."""
 
-    for item in data:
-        add_row(conn, item, table_name)
+        cursor = self.conn.cursor()
+        cursor.execute("CREATE TABLE %s( \
+                    location TEXT, \
+                    time TIMESTAMP, \
+                    apparentTemperature REAL, \
+                    cloudCover TEXT, \
+                    dewPoint REAL, \
+                    humidity REAL, \
+                    icon TEXT, \
+                    ozone REAL, \
+                    precipAccumulation REAL, \
+                    precipIntensity REAL, \
+                    precipProbability REAL, \
+                    precipType TEXT, \
+                    pressure REAL, \
+                    summary TEXT, \
+                    temperature REAL, \
+                    uvIndex REAL, \
+                    visibility REAL, \
+                    windBearing REAL, \
+                    windGust REAL, \
+                    windSpeed REAL, \
+                    precipSigned REAL, \
+                    PRIMARY KEY(Location, time));" % table_name)
 
-def drop_table(conn, table_name):
-    """Use me with caution!"""
-    cursor=conn.cursor()
-    cursor.execute("DROP TABLE %s"%table_name)
-    conn.commit()
+        self.conn.commit()
 
-def create_darksky_table(conn, table_name):
-    """ All darksky tables have the same format.
-
-    Note that location and precipSigned are added by us, not the API."""
-
-    cursor=conn.cursor()
-    cursor.execute("CREATE TABLE %s( \
-                location TEXT, \
-                time TIMESTAMP, \
-                apparentTemperature REAL, \
-                cloudCover TEXT, \
-                dewPoint REAL, \
-                humidity REAL, \
-                icon TEXT, \
-                ozone REAL, \
-                precipAccumulation REAL, \
-                precipIntensity REAL, \
-                precipProbability REAL, \
-                precipType TEXT, \
-                pressure REAL, \
-                summary TEXT, \
-                temperature REAL, \
-                uvIndex REAL, \
-                visibility REAL, \
-                windBearing REAL, \
-                windGust REAL, \
-                windSpeed REAL, \
-                precipSigned REAL, \
-                PRIMARY KEY(Location, time));"%table_name)
-
-    conn.commit()
 
 if __name__ == '__main__':
 
-    loc_dict = {'Jay Peak':(44.9649,-72.4602),
-            'Mt Sutton':(45.1047, -72.5618),
-            'Mt Tremblant': (46.1185,-74.5962),
-            'St Anne': (47.0754,-70.9049),
-            'Le Massif': (47.2848,-70.5697),
-           }
+    db = DatabaseConnection()
 
-    conn = connect_to_db()
+    ds = darksky.DarkSky()
+    current_df = ds.get_past_week_darksky(loc_dict)
+    db.add_darksky(current_df, 'ds_current')
 
-    current_df = darksky.get_past_week_darksky(loc_dict)
-    add_darksky(conn, current_df, 'ds_current')
-
-    forecast_df = darksky.get_nextweek_darksky(loc_dict)
+    forecast_df = ds.get_nextweek_darksky(loc_dict)
 
     # We have to drop existing forecasts before adding new ones
-    drop_table(conn, 'ds_forecasts')
-    create_darksky_table(conn, 'ds_forecasts')
-    add_darksky(conn, forecast_df, 'ds_forecasts')
+    db.drop_table('ds_forecasts')
+    db.create_darksky_table('ds_forecasts')
+    db.add_darksky(forecast_df, 'ds_forecasts')
