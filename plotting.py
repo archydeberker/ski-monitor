@@ -57,7 +57,6 @@ class PostgresGrapher:
                     xaxis={'title': 'Date'},
                     yaxis={'title': ytitle if ytitle else title},
                     margin={'l': 90, 'b': 90, 't': 90, 'r': 50},
-                    showlegend=False,
                     hovermode='closest',
                     title=title
                 )
