@@ -20,9 +20,12 @@ def get_snow_depths(url_dict):
         soup = BeautifulSoup(r.text, 'html.parser')
 
         for slope in ['upper', 'middle', 'lower']:
-            list_item = soup.find('li', attrs={'class':'elevation %s' % slope})
-            value = list_item.find('div', attrs={'class':"bluePill"}).contents[0]
-            value = int(''.join(list(filter(str.isdigit, value))))
+            try:
+                list_item = soup.find('li', attrs={'class':'elevation %s' % slope})
+                value = list_item.find('div', attrs={'class':"bluePill"}).contents[0]
+                value = int(''.join(list(filter(str.isdigit, value))))
+            except AttributeError:
+                value = None
 
             if location == 'Jay Peak':
                 value=int(value*2.54)

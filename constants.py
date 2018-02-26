@@ -17,7 +17,7 @@ url_dict = {'Jay Peak': 'https://www.onthesnow.com/vermont/jay-peak/skireport.ht
             'St Anne': 'https://www.onthesnow.ca/quebec/mont-sainte-anne/skireport.html',
             'Le Massif': 'https://www.onthesnow.ca/quebec/le-massif/skireport.html',
             'Stowe': 'https://www.onthesnow.com/vermont/stowe-mountain-resort/skireport.html',
-            'St Sauveur': 'https://www.onthesnow.com/quebec/mont-saint-sauveur/skireport.html'
+            'St Sauveur': 'https://www.onthesnow.ca/quebec/mont-saint-sauveur/skireport.html'
             }
 
 url_dict = OrderedDict(sorted(url_dict.items(), key=lambda t: t[0]))
