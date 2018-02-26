@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-loc_dict = {'Jay Peak':(44.9367723, -72.525403),  # Jay Peak Summit https://goo.gl/maps/q1YWigKsBd62
+ld = {'Jay Peak':(44.9367723, -72.525403),  # Jay Peak Summit https://goo.gl/maps/q1YWigKsBd62
             'Mt Sutton':(45.0894197, -72.5603979),  # Mt Sutton Chalet 840 https://goo.gl/maps/ZYpM4WYmuM92
             'Mt Tremblant': (46.2124932, -74.5620593),  # Mt Tremblant Summit https://goo.gl/maps/K6QzKPPZjKF2
             'St Anne': (47.087339, -70.931965),  # St Anne Summit https://goo.gl/maps/HgnbNbfU7uG2
@@ -9,9 +9,9 @@ loc_dict = {'Jay Peak':(44.9367723, -72.525403),  # Jay Peak Summit https://goo.
             'St Sauveur': (45.8815953,-74.1598122)  # Mt St-Sauveur Summit https://goo.gl/maps/52H9iGnXsom
             }
 
-loc_dict = OrderedDict(sorted(loc_dict.items(), key=lambda t: t[0]))
+loc_dict = OrderedDict(sorted(ld.items(), key=lambda t: t[0]))
 
-url_dict = {'Jay Peak': 'https://www.onthesnow.com/vermont/jay-peak/skireport.html',
+ud = {'Jay Peak': 'https://www.onthesnow.com/vermont/jay-peak/skireport.html',
             'Mt Sutton': 'https://www.onthesnow.ca/quebec/mont-sutton/skireport.html',
             'Mt Tremblant': 'https://www.onthesnow.ca/quebec/tremblant/skireport.html',
             'St Anne': 'https://www.onthesnow.ca/quebec/mont-sainte-anne/skireport.html',
@@ -20,7 +20,7 @@ url_dict = {'Jay Peak': 'https://www.onthesnow.com/vermont/jay-peak/skireport.ht
             'St Sauveur': 'https://www.onthesnow.ca/quebec/mont-saint-sauveur/skireport.html'
             }
 
-url_dict = OrderedDict(sorted(url_dict.items(), key=lambda t: t[0]))
+url_dict = OrderedDict(sorted(ud.items(), key=lambda t: t[0]))
 
 for key in loc_dict.keys():
     assert url_dict.get(key) is not None
