@@ -37,7 +37,7 @@ class PostgresGrapher:
             }
         )
 
-    def plot_area(self, df, column, title, ytitle=None):
+    def plot_area(self, df, column, title, ytitle=None, ylim=None):
 
         return dcc.Graph(
             id= column,
@@ -55,7 +55,8 @@ class PostgresGrapher:
                 ],
                 'layout': go.Layout(
                     xaxis={'title': 'Date'},
-                    yaxis={'title': ytitle if ytitle else title},
+                    yaxis={'title': ytitle if ytitle else title,
+                           'range': ylim if ylim else 'auto'},
                     margin={'l': 90, 'b': 90, 't': 90, 'r': 50},
                     hovermode='closest',
                     title=title

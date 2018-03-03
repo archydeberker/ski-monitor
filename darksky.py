@@ -26,7 +26,7 @@ class DarkSky:
 
         df['time'] = df['time'].apply(lambda x: datetime.datetime.fromtimestamp(x))
 
-        df.sort_values(by='time', inplace=True)
+        df.sort_values(by=['time', 'location'], inplace=True)
 
         p_type = np.array([int(i) for i in (df['precipType']=='rain').tolist()])
 

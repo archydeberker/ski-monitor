@@ -75,7 +75,7 @@ def display_content(value):
                               style={'columnCount': 2})
 
         lower_divs = html.Div([html.Div(pg.plot_area(df_historic, 'precipsigned', 'Snowfall plotted as positive values, rainfall as negative',
-                                                     'Precipitation (mm/hr)'), className='eight columns'),
+                                                     'Precipitation (mm/hr)', ylim=[-10, 10]), className='eight columns'),
 
                                html.Div(plotting.plot_bar(snowdepth_df, ['lower', 'middle', 'upper'], 'Current Snow Depth','Snow Depth (cm)'), className='four columns')],
                               className='row')
@@ -88,7 +88,8 @@ def display_content(value):
                                pg.plot_lines(df_forecast, 'windspeed', 'Windspeed', 'Windspeed (Mph)')],
                               style={'columnCount': 2})
 
-        return html.Div([graph_divs, html.Div(pg.plot_area(df_forecast, 'precipsigned' , 'Snowfall plotted as positive values, rainfall as negative.', 'Precipitation (mm/hr)')),
+        return html.Div([graph_divs, html.Div(pg.plot_area(df_forecast, 'precipsigned' , 'Snowfall plotted as positive values, rainfall as negative.',
+                                                           'Precipitation (mm/hr)', ylim=[-10, 10])),
                          darksky_div])
 
 
