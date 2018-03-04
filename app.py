@@ -3,6 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import datetime
+import numpy as np
 
 from dash.dependencies import Input, Output
 
@@ -65,6 +66,12 @@ snowdepth_df = scraping.get_snow_depths(url_dict)
 
 pg = plotting.PostgresGrapher()
 
+ymax = max([df_historic['precipsigned'].max(), df_forecast['precipsigned'].max()])
+ymin = min([df_historic['precipsigned'].min(), df_forecast['precipsigned'].min()])
+
+ylim = [ymin, ymax]
+
+print(ylim)
 
 @app.callback(Output('tab-output', 'children'), [Input('tabs', 'value')])
 def display_content(value):
@@ -75,7 +82,7 @@ def display_content(value):
                               style={'columnCount': 2})
 
         lower_divs = html.Div([html.Div(pg.plot_area(df_historic, 'precipsigned', 'Snowfall plotted as positive values, rainfall as negative',
-                                                     'Precipitation (mm/hr)', ylim=[-10, 10]), className='eight columns'),
+                                                     'Precipitation (mm/hr)', ylim=ylim), className='eight columns'),
 
                                html.Div(plotting.plot_bar(snowdepth_df, ['lower', 'middle', 'upper'], 'Current Snow Depth','Snow Depth (cm)'), className='four columns')],
                               className='row')
@@ -89,7 +96,7 @@ def display_content(value):
                               style={'columnCount': 2})
 
         return html.Div([graph_divs, html.Div(pg.plot_area(df_forecast, 'precipsigned' , 'Snowfall plotted as positive values, rainfall as negative.',
-                                                           'Precipitation (mm/hr)', ylim=[-10, 10])),
+                                                           'Precipitation (mm/hr)', ylim=ylim)),
                          darksky_div])
 
 
