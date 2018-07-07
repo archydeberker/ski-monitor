@@ -1,5 +1,6 @@
 from urllib import parse
 
+import numpy as np
 import pandas as pd
 import psycopg2
 import os
@@ -96,7 +97,7 @@ class DatabaseConnection:
 
         cursor = self.conn.cursor()
 
-        cursor.execute("DELETE FROM %s WHERE CURRENT_TIMESTAMP - time > %s::interval" % (table_name,
+        cursor.execute("DELETE FROM %s WHERE CURRENT_TIMESTAMP - time > '%s'::interval" % (table_name,
                                                                                          interval))
         self.conn.commit()
 
@@ -134,9 +135,15 @@ class DatabaseConnection:
 
     def hours_since_last_record(self, table_name):
         df = pd.read_sql('SELECT * from %s' % table_name, self.conn)
-        td = datetime.datetime.now() - df['time'].max()
 
-        return td.seconds/3600 + td.days* 24
+        if len(df) > 0:
+            td = datetime.datetime.now() - df['time'].max()
+            hours = td.seconds/3600 + td.days* 24
+        else:
+            # The dataframe is empty, so the time since the last record is infinite
+            hours = np.inf
+
+        return hours
 
 
 if __name__ == '__main__':

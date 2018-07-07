@@ -49,7 +49,7 @@ class DarkSky:
             timestamps = [datetime.datetime.combine(d, datetime.time()).timestamp() for d in dates]
         else:
             now = datetime.datetime.now()
-            timestamps = [now - datetime.timedelta(hours=i) for i in range(hours)]
+            timestamps = [(now - datetime.timedelta(hours=i)).timestamp() for i in range(hours)]
 
         for loc in loc_dict.keys():
             lon = loc_dict[loc][0]
