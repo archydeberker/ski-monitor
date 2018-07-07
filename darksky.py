@@ -36,15 +36,20 @@ class DarkSky:
 
         return df
 
-    def get_past_week_darksky(self, loc_dict):
-        """ Fetch hourly details for every day in the last week."""
+    def get_multiple_days_darksky(self, loc_dict, days=None, hours=None):
+        """ Fetch historic data for a given time period.
+
+        You can specify either days OR hours, noth both."""
 
         df = self.df_template()
 
-        now = datetime.datetime.date(datetime.datetime.now())
-        dates = [now - datetime.timedelta(days=i) for i in range(7)]
-
-        timestamps = [datetime.datetime.combine(d, datetime.time()).timestamp() for d in dates]
+        if days is not None:
+            now = datetime.datetime.date(datetime.datetime.now())
+            dates = [now - datetime.timedelta(days=i) for i in range(days)]
+            timestamps = [datetime.datetime.combine(d, datetime.time()).timestamp() for d in dates]
+        else:
+            now = datetime.datetime.now()
+            timestamps = [now - datetime.timedelta(hours=i) for i in range(hours)]
 
         for loc in loc_dict.keys():
             lon = loc_dict[loc][0]

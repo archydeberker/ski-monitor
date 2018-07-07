@@ -141,15 +141,17 @@ class DatabaseConnection:
 
 if __name__ == '__main__':
 
+    hourly_refresh_frequency = 6
+
     db = DatabaseConnection()
 
     # Remove records older than a month
     db.delete_old_rows('ds_current', interval='1 month')
 
-    if db.hours_since_last_record('ds_current') > 6:
+    if db.hours_since_last_record('ds_current') > hourly_refresh_frequency:
 
         ds = darksky.DarkSky()
-        current_df = ds.get_past_week_darksky(loc_dict)
+        current_df = ds.get_multiple_days_darksky(loc_dict, hours=hourly_refresh_frequency)
         db.add_darksky(current_df, 'ds_current')
 
         forecast_df = ds.get_nextweek_darksky(loc_dict)

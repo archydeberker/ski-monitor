@@ -75,7 +75,3 @@ def test_plot_area():
 def test_plot_bar():
 
     plot = plotting.plot_bar(mock_df, ['A', 'B'], 'bar of A and B')
-
-def test_hours_since_last_record():
-
-
