@@ -141,7 +141,7 @@ if __name__ == '__main__':
     db.add_darksky(current_df, 'ds_current')
 
     # Remove records older than a month
-    db.drop_old_rows()
+    db.delete_old_rows('ds_current', interval='1 month')
 
     forecast_df = ds.get_nextweek_darksky(loc_dict)
 
