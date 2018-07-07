@@ -28,7 +28,7 @@ def get_snow_depths(url_dict):
                 value = None
 
             if location == 'Jay Peak':
-                value=int(value*2.54)
+                value = int(value*2.54) if value is not None else None
 
             snow_depth[location][slope] = value
 
