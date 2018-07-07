@@ -91,6 +91,13 @@ class DatabaseConnection:
         cursor.execute("DROP TABLE %s" % table_name)
         self.conn.commit()
 
+    def delete_old_rows(self, table_name, interval='1 month'):
+
+        cursor = self.conn.cursor()
+
+        cursor.execute("DELETE FROM %s WHERE CURRENT_TIMESTAMP - time > %s::interval" % (table_name,
+                                                                                         interval))
+        self.conn.commit()
 
     def create_darksky_table(self, table_name):
         """ All darksky tables have the same format.
@@ -132,6 +139,9 @@ if __name__ == '__main__':
     ds = darksky.DarkSky()
     current_df = ds.get_past_week_darksky(loc_dict)
     db.add_darksky(current_df, 'ds_current')
+
+    # Remove records older than a month
+    db.drop_old_rows()
 
     forecast_df = ds.get_nextweek_darksky(loc_dict)
 
