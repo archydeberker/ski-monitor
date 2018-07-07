@@ -3,6 +3,7 @@ from urllib import parse
 import pandas as pd
 import psycopg2
 import os
+import datetime
 
 from psycopg2.extensions import AsIs
 
@@ -131,21 +132,29 @@ class DatabaseConnection:
 
         self.conn.commit()
 
+    def hours_since_last_record(self, table_name):
+        df = pd.read_sql('SELECT * from %s' % table_name, self.conn)
+        td = datetime.datetime.now() - df['time'].max()
+
+        return td.seconds/3600 + td.days* 24
+
 
 if __name__ == '__main__':
 
     db = DatabaseConnection()
 
-    ds = darksky.DarkSky()
-    current_df = ds.get_past_week_darksky(loc_dict)
-    db.add_darksky(current_df, 'ds_current')
-
     # Remove records older than a month
     db.delete_old_rows('ds_current', interval='1 month')
 
-    forecast_df = ds.get_nextweek_darksky(loc_dict)
+    if db.hours_since_last_record('ds_current') > 6:
 
-    # We have to drop existing forecasts before adding new ones
-    db.drop_table('ds_forecasts')
-    db.create_darksky_table('ds_forecasts')
-    db.add_darksky(forecast_df, 'ds_forecasts')
+        ds = darksky.DarkSky()
+        current_df = ds.get_past_week_darksky(loc_dict)
+        db.add_darksky(current_df, 'ds_current')
+
+        forecast_df = ds.get_nextweek_darksky(loc_dict)
+
+        # We have to drop existing forecasts before adding new ones
+        db.drop_table('ds_forecasts')
+        db.create_darksky_table('ds_forecasts')
+        db.add_darksky(forecast_df, 'ds_forecasts')
