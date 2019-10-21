@@ -43,6 +43,6 @@ tornado==4.5.3
 traitlets==4.3.2
 urllib3==1.22
 wcwidth==0.1.7
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 beautifulsoup4==4.6.0
 pytest==3.4.0
