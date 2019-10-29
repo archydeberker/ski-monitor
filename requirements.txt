@@ -41,7 +41,7 @@ six==1.11.0
 SQLAlchemy==1.2.3
 tornado==4.5.3
 traitlets==4.3.2
-urllib3==1.22
+urllib3==1.24.2
 wcwidth==0.1.7
 Werkzeug==0.15.3
 beautifulsoup4==4.6.0
